@@ -1,0 +1,36 @@
+{
+  // Worker do Stepwise — conta Cloudflare da Growth Tech, como o Bola Alta (docs/00-estado.md, D2).
+  // NÃO usa o VPS nem o 9router: medido em 08/10/2026, o 9router não é alcançável de fora do VPS e a chave
+  // dele é a da produção do 48 (docs/00-estado.md §3).
+  "name": "stepwise",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "worker/index.js",
+  "workers_dev": true,
+  "assets": { "directory": "./public" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stepwise",
+      // criado em 08/10/2026 pelo assistente (`wrangler d1 create stepwise --location enam`) — não é segredo
+      "database_id": "79a6030a-2721-439c-afd9-753c394f6310",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Workers AI: Whisper (fala → texto, com o tempo de cada palavra) e Aura-2 (texto → voz em inglês).
+  // Mesmo no `wrangler dev` ele roda na conta da Cloudflare e cobra (centavos): docs/00-estado.md §3.
+  "ai": { "binding": "AI" },
+  "vars": {
+    "MODELO_CONVERSA": "claude-haiku-4-5",
+    "MODELO_AVALIACAO": "claude-sonnet-5-5",
+    "VOZ": "thalia",
+    // Aberto a qualquer conta Google (D11, 08/10): estas três travas seguram o gasto.
+    "CONTAS_LIBERADAS": "*",
+    "MAX_CONTAS": "50",
+    "LIMITE_TURNOS_DIA": "300",
+    "LIMITE_GLOBAL_DIA": "800"
+  },
+  // Segredos (nunca aqui): wrangler secret put ANTHROPIC_API_KEY · GOOGLE_CLIENT_ID · GOOGLE_CLIENT_SECRET ·
+  // SESSAO_SEGREDO. Local: .dev.vars (copie de .dev.vars.exemplo).
+  "observability": { "enabled": true }
+}

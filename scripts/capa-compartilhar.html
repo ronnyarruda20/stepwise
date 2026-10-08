@@ -1,0 +1,89 @@
+<!doctype html>
+<!-- Fonte da imagem de compartilhamento (public/capa.jpg, 1200×630): o cartão que aparece quando o link vai no
+     WhatsApp, no Google ou numa rede social. Mesmo degradê, bolhas e orbe da tela de entrar (estilo.css, .capa).
+     Regerar: npm run capa  (Chrome sem janela tira a foto desta página; a fonte Nunito vem do Google Fonts só
+     na hora da foto — o PNG não carrega nada de fora). -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    font-family: "Nunito", ui-rounded, sans-serif;
+    color: #fff;
+    background:
+      radial-gradient(900px 520px at 88% 8%, rgba(255, 255, 255, .16), transparent 60%),
+      radial-gradient(700px 500px at 0% 100%, rgba(30, 10, 90, .35), transparent 60%),
+      linear-gradient(135deg, #5b3df5 0%, #7c3aed 55%, #9333ea 100%);
+    position: relative;
+  }
+  .pontos { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.18) 1.2px, transparent 1.4px); background-size: 26px 26px; mask-image: linear-gradient(100deg, transparent 35%, #000 75%); }
+
+  .texto { position: absolute; left: 80px; top: 72px; width: 600px; }
+  .marca { display: flex; align-items: center; gap: 16px; font-weight: 900; font-size: 34px; letter-spacing: -.01em; }
+  .marca svg { width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 10px 26px rgba(20, 8, 70, .35), 0 0 0 2px rgba(255,255,255,.35); }
+  h1 { margin-top: 36px; font-size: 72px; line-height: .98; font-weight: 900; letter-spacing: -.03em; }
+  h1 em { font-style: normal; color: #e6f9c4; }
+  .sub { margin-top: 22px; font-size: 26px; line-height: 1.3; font-weight: 600; color: rgba(255, 255, 255, .9); }
+  .selos { position: absolute; left: 80px; bottom: 54px; display: flex; gap: 14px; }
+  .selo { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 999px; background: rgba(255, 255, 255, .15); border: 1.5px solid rgba(255, 255, 255, .28); font-weight: 800; font-size: 21px; backdrop-filter: blur(6px); }
+  .selo i { font-style: normal; font-size: 22px; }
+
+  /* cena à direita: o "celular" com a conversa */
+  .cena { position: absolute; right: 78px; top: 58px; width: 380px; height: 514px; border-radius: 48px; background: rgba(255, 255, 255, .12); border: 2px solid rgba(255, 255, 255, .28); box-shadow: 0 30px 80px rgba(20, 8, 70, .45), inset 0 1px 0 rgba(255,255,255,.35); }
+  .cena .topo { position: absolute; left: 50%; top: 18px; width: 110px; height: 30px; margin-left: -55px; border-radius: 20px; background: rgba(20, 10, 60, .45); }
+  .bolha { position: absolute; padding: 16px 22px; border-radius: 26px; font-weight: 800; font-size: 23px; line-height: 1.2; box-shadow: 0 14px 34px rgba(20, 10, 60, .30); white-space: nowrap; }
+  .b1 { left: -44px; top: 82px; background: #fff; color: #1b1530; border-bottom-left-radius: 8px; }
+  .b2 { right: -40px; bottom: 104px; background: #e6f9c4; color: #3f6212; border-bottom-right-radius: 8px; }
+  .b2 s { color: #be123c; text-decoration-thickness: 3px; opacity: .8; }
+  .b2 b { color: #15803d; }
+  .nota { position: absolute; left: 34px; bottom: 24px; display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 20px; background: #fff; color: #1b1530; box-shadow: 0 14px 34px rgba(20, 10, 60, .30); }
+  .nota .nivel { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 20px; color: #4c2fe0; background: conic-gradient(#5b3df5 0 57%, #ede9fe 57% 100%); position: relative; }
+  .nota .nivel::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fff; }
+  .nota .nivel span { position: relative; }
+  .nota b { display: block; font-size: 18px; font-weight: 900; }
+  .nota small { display: block; font-size: 15px; font-weight: 700; color: #6b6585; }
+
+  .orbe { position: absolute; left: 50%; top: 50%; width: 210px; height: 210px; margin: -150px 0 0 -105px; }
+  .orbe .halo { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .45), rgba(255, 255, 255, .16) 58%, transparent 72%); }
+  .orbe .halo.h2 { inset: -44px; opacity: .6; }
+  .orbe .nucleo { position: absolute; inset: 38px; border-radius: 50%; background: linear-gradient(135deg, #5b3df5 0%, #7c3aed 55%, #9333ea 100%); display: grid; place-items: center; box-shadow: 0 16px 40px rgba(30, 10, 110, .55), inset 0 -10px 22px rgba(0,0,0,.22), inset 0 10px 20px rgba(255,255,255,.30), 0 0 0 3px rgba(255,255,255,.55); }
+  .orbe svg { width: 58px; height: 58px; }
+  .ondas { position: absolute; left: 50%; top: calc(50% + 58px); transform: translateX(-50%); display: flex; gap: 7px; align-items: center; height: 40px; }
+  .ondas span { width: 8px; border-radius: 4px; background: rgba(255, 255, 255, .85); }
+</style>
+</head>
+<body>
+  <div class="pontos"></div>
+
+
+  <div class="texto">
+    <div class="marca">
+      <svg viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b3df5"/><stop offset=".55" stop-color="#7c3aed"/><stop offset="1" stop-color="#9333ea"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><path d="M120 360h88v-64h88v-64h88v-64" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/><circle cx="384" cy="168" r="30" fill="#e6f9c4"/></svg>
+      Stepwise
+    </div>
+    <h1>Fale inglês,<br>um <em>degrau</em><br>por vez.</h1>
+    <p class="sub">Descubra seu nível só conversando<br>e pratique com correção na hora.</p>
+  </div>
+  <div class="selos">
+    <div class="selo"><i>🎙️</i> Prova por voz</div>
+    <div class="selo"><i>📈</i> A1 → C2</div>
+    <div class="selo"><i>✍️</i> Correção</div>
+  </div>
+
+  <div class="cena">
+    <div class="topo"></div>
+    <div class="bolha b1">Hi! How was your day? 👋</div>
+    <div class="orbe">
+      <span class="halo h2"></span><span class="halo"></span>
+      <span class="nucleo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></span>
+    </div>
+    <div class="ondas"><span style="height:14px"></span><span style="height:26px"></span><span style="height:38px"></span><span style="height:22px"></span><span style="height:32px"></span><span style="height:16px"></span><span style="height:28px"></span><span style="height:12px"></span></div>
+    <div class="bolha b2">It <s>is</s> <b>was</b> great, thanks!</div>
+    <div class="nota"><div class="nivel"><span>B1</span></div><div><b>Intermediário</b><small>seu nível hoje</small></div></div>
+  </div>
+</body>
+</html>

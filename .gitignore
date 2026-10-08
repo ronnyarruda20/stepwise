@@ -1,0 +1,10 @@
+# Stepwise — repo próprio. Segredo nunca aqui: wrangler secret put (remoto) ou .dev.vars (local).
+node_modules/
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+Thumbs.db
+# Interno (decisões, botões do Ronny, contas e infra da Growth): fica no disco e no RAG do workspace, não no
+# repo público. O case público é o .github/README.md.
+docs/00-estado.md

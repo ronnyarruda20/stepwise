@@ -1,0 +1,20 @@
+# Copie para .dev.vars (fica fora do git) e preencha NO SEU TERMINAL — nunca cole a chave no chat.
+#
+# ANTHROPIC_API_KEY: chave da org da EMPRESA (growthtechinovasion@), num workspace "stepwise" com limite de
+# gasto — nunca a 9router-producao (docs/00-estado.md §3).
+ANTHROPIC_API_KEY=
+#
+# Login: no local o botão "Entrar (modo local)" dispensa o Google. Os três abaixo podem ficar falsos.
+GOOGLE_CLIENT_ID=falso.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=falso
+SESSAO_SEGREDO=segredo-local-falso-troque-no-remoto
+#
+# Quem pode entrar: e-mails separados por vírgula, ou "*" para qualquer conta Google (no ar é "*", D11; as
+# travas MAX_CONTAS, LIMITE_TURNOS_DIA e LIMITE_GLOBAL_DIA seguram o gasto).
+CONTAS_LIBERADAS=local@stepwise.test
+#
+# Só valem em localhost (o Worker ignora fora dele):
+#   MODO_LOCAL=1 → mostra "Entrar (modo local)"
+#   IA_FALSA=1   → não chama Claude nem Workers AI: respostas fixas, para os testes (scripts/teste-rota.mjs)
+MODO_LOCAL=1
+IA_FALSA=0

@@ -1,0 +1,8 @@
+# Stepwise — só a página inicial interessa a buscador; a API e o login não.
+User-agent: *
+Allow: /$
+Disallow: /api/
+Disallow: /entrar
+Disallow: /sair
+
+Sitemap: https://stepwise.growthtechinovasion.workers.dev/sitemap.xml

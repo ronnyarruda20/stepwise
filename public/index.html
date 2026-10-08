@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stepwise · Inglês falado com IA: teste de nível e conversação</title>
+  <meta name="description" content="Descubra seu nível de inglês (A1 a C2) só conversando por voz e pratique com uma IA que corrige seus erros na hora e lembra deles. Feito para brasileiros.">
+  <!-- SEO e prévia do link. As URLs absolutas apontam para o workers.dev (docs/00-estado.md); se o app ganhar
+       domínio, troque aqui, no robots.txt e no sitemap.xml. A imagem sai de scripts/capa-compartilhar.html (npm run capa). -->
+  <link rel="canonical" href="https://stepwise.growthtechinovasion.workers.dev/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="application-name" content="Stepwise">
+  <meta name="keywords" content="inglês, conversação em inglês, teste de nível de inglês, CEFR, falar inglês, inglês com IA, praticar inglês, correção de inglês">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Stepwise">
+  <meta property="og:url" content="https://stepwise.growthtechinovasion.workers.dev/">
+  <meta property="og:title" content="Stepwise · Fale inglês, um degrau por vez">
+  <meta property="og:description" content="Descubra seu nível só conversando e pratique com uma IA que corrige na hora.">
+  <meta property="og:image" content="https://stepwise.growthtechinovasion.workers.dev/capa.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Stepwise: fale inglês, um degrau por vez. Um microfone entre dois balões de conversa, com a correção “It was great” e o nível B1.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Stepwise · Fale inglês, um degrau por vez">
+  <meta name="twitter:description" content="Descubra seu nível só conversando e pratique com uma IA que corrige na hora.">
+  <meta name="twitter:image" content="https://stepwise.growthtechinovasion.workers.dev/capa.jpg">
+  <meta name="twitter:image:alt" content="Stepwise: fale inglês, um degrau por vez.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://stepwise.growthtechinovasion.workers.dev/#site",
+        "url": "https://stepwise.growthtechinovasion.workers.dev/",
+        "name": "Stepwise",
+        "inLanguage": "pt-BR"
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://stepwise.growthtechinovasion.workers.dev/#app",
+        "url": "https://stepwise.growthtechinovasion.workers.dev/",
+        "name": "Stepwise",
+        "description": "Conversação em inglês com IA para brasileiros: prova de nivelamento por voz na escala CEFR (A1 a C2) e conversas que corrigem os erros e lembram deles.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "iOS, Android, Windows, macOS",
+        "browserRequirements": "Requer navegador moderno com microfone.",
+        "inLanguage": "pt-BR",
+        "image": "https://stepwise.growthtechinovasion.workers.dev/capa.jpg",
+        "isPartOf": { "@id": "https://stepwise.growthtechinovasion.workers.dev/#site" },
+        "about": { "@type": "Language", "name": "Inglês", "alternateName": "en" },
+        "educationalLevel": "CEFR A1–C2",
+        "featureList": ["Teste de nível de inglês por voz", "Conversa com correção na hora", "Relatório de erros de cada pessoa"]
+      }
+    ]
+  }
+  </script>
+
+  <meta name="theme-color" content="#5b3df5">
+  <meta name="color-scheme" content="light dark">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icone.svg" type="image/svg+xml">
+  <link rel="icon" href="/icone-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/icone-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Stepwise">
+  <link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <p class="carregando">Carregando…</p>
+    <noscript>
+      <h1>Fale inglês, um degrau por vez.</h1>
+      <p>Stepwise descobre o seu nível de inglês (A1 a C2) só conversando por voz e depois conversa com você corrigindo o que importa. Para usar, ative o JavaScript no navegador.</p>
+    </noscript>
+  </main>
+  <audio id="voz" playsinline preload="auto"></audio>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
