@@ -2,7 +2,9 @@
   "name": "stepwise",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "description": "Stepwise — conversação em inglês com IA para brasileiros: prova de nivelamento por voz (CEFR) e conversa com correção. Worker Cloudflare + D1. Estado: docs/00-estado.md.",
   "scripts": {
     "db:local": "wrangler d1 migrations apply stepwise --local",
@@ -10,13 +12,12 @@
     "teste:regras": "node scripts/teste-regras.mjs",
     "teste:rota": "node scripts/teste-rota.mjs",
     "teste:aberto": "node scripts/teste-aberto.mjs",
-    "teste": "npm run teste:regras && npm run teste:rota && npm run teste:aberto",
+    "teste:ia": "node scripts/teste-ia.mjs",
+    "teste": "npm run teste:regras && npm run teste:ia && npm run teste:rota && npm run teste:aberto",
+    "sonda:ia": "node scripts/sonda-ia.mjs",
     "capa": "node scripts/gerar-capa.mjs",
     "deploy": "npm run teste && wrangler deploy",
     "db:remoto": "wrangler d1 migrations apply stepwise --remote"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.132.1"
   },
   "devDependencies": {
     "wrangler": "4.120.1"

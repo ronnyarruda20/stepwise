@@ -1,8 +1,8 @@
 # Copie para .dev.vars (fica fora do git) e preencha NO SEU TERMINAL — nunca cole a chave no chat.
 #
-# ANTHROPIC_API_KEY: chave da org da EMPRESA (growthtechinovasion@), num workspace "stepwise" com limite de
-# gasto — nunca a 9router-producao (docs/00-estado.md §3).
-ANTHROPIC_API_KEY=
+# DEEPSEEK_API_KEY: chave própria do Stepwise em platform.deepseek.com (D14, 09/10). A conta é pré-paga: o gasto
+# máximo é o saldo carregado. Nunca a do 9router (docs/00-estado.md §3).
+DEEPSEEK_API_KEY=
 #
 # Login: no local o botão "Entrar (modo local)" dispensa o Google. Os três abaixo podem ficar falsos.
 GOOGLE_CLIENT_ID=falso.apps.googleusercontent.com
@@ -15,6 +15,6 @@ CONTAS_LIBERADAS=local@stepwise.test
 #
 # Só valem em localhost (o Worker ignora fora dele):
 #   MODO_LOCAL=1 → mostra "Entrar (modo local)"
-#   IA_FALSA=1   → não chama Claude nem Workers AI: respostas fixas, para os testes (scripts/teste-rota.mjs)
+#   IA_FALSA=1   → não chama a DeepSeek nem o Workers AI: respostas fixas, para os testes (scripts/teste-rota.mjs)
 MODO_LOCAL=1
 IA_FALSA=0

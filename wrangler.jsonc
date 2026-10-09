@@ -17,12 +17,16 @@
       "migrations_dir": "migrations"
     }
   ],
-  // Workers AI: Whisper (fala → texto, com o tempo de cada palavra) e Aura-2 (texto → voz em inglês).
-  // Mesmo no `wrangler dev` ele roda na conta da Cloudflare e cobra (centavos): docs/00-estado.md §3.
+  // Workers AI: Whisper (fala → texto, com o tempo de cada palavra) e MeloTTS (texto → voz em inglês).
+  // Mesmo no `wrangler dev` ele roda na conta da Cloudflare e gasta a cota grátis diária: docs/00-estado.md §3.
   "ai": { "binding": "AI" },
   "vars": {
-    "MODELO_CONVERSA": "claude-haiku-4-5",
-    "MODELO_AVALIACAO": "claude-sonnet-5-5",
+    // IA de texto: DeepSeek desde 09/10/2026 (D14). Conversa e juiz sem pensamento; avaliação e relatório com.
+    "MODELO_CONVERSA": "deepseek-flash",
+    "MODELO_AVALIACAO": "deepseek-v4-pro",
+    // Voz da IA: "melotts" (cabe na cota grátis), "aura" (melhor, mas esgota a cota em ~24 turnos/dia) ou
+    // "aparelho" (só a voz do iPhone, zero cota). VOZ é a voz do Aura-2, usada só com "aura". Ver worker/voz.js.
+    "VOZ_MOTOR": "melotts",
     "VOZ": "thalia",
     // Aberto a qualquer conta Google (D11, 08/10): estas três travas seguram o gasto.
     "CONTAS_LIBERADAS": "*",
@@ -30,7 +34,7 @@
     "LIMITE_TURNOS_DIA": "300",
     "LIMITE_GLOBAL_DIA": "800"
   },
-  // Segredos (nunca aqui): wrangler secret put ANTHROPIC_API_KEY · GOOGLE_CLIENT_ID · GOOGLE_CLIENT_SECRET ·
+  // Segredos (nunca aqui): wrangler secret put DEEPSEEK_API_KEY · GOOGLE_CLIENT_ID · GOOGLE_CLIENT_SECRET ·
   // SESSAO_SEGREDO. Local: .dev.vars (copie de .dev.vars.exemplo).
   "observability": { "enabled": true }
 }

@@ -54,7 +54,7 @@ celular, sem instalar nada.
 ### A nota é a mediana de três correções, não uma
 
 Modelo de linguagem oscila. Corrigindo a mesma prova duas vezes, ele pode dar A2 numa e B1 na outra, e uma
-nota que muda sozinha acaba com a confiança no app. Por isso o Claude Sonnet corrige a prova inteira
+nota que muda sozinha acaba com a confiança no app. Por isso o modelo de avaliação corrige a prova inteira
 **três vezes, em paralelo e de forma independente**, com uma rubrica fixa, e a nota é a **mediana** em cada
 habilidade. Com só duas rodadas válidas, fica a menor, para não promover ninguém por empate. A diferença
 entre as três fica guardada, para calibrar a prova depois.
@@ -90,13 +90,23 @@ precisa de tempo. Um toque começa a gravar e outro envia.
 
 Qualquer conta Google entra. Como cada fala custa transcrição, resposta e voz, o gasto é segurado por três
 travas na configuração: **50 contas no máximo**, **300 falas por dia por conta** e **800 falas por dia
-somando todas**. A última protege a parte de voz, que é cobrada fora do limite de gasto da API de texto.
+somando todas**. A última protege a parte de voz, que é cobrada fora do saldo da API de texto.
 
 ### Modelos diferentes para tarefas diferentes
 
-O **Claude Haiku** conversa e julga cada resposta da prova, porque precisa ser rápido e barato. O **Claude
-Sonnet** faz a correção final, que pede mais critério e roda uma vez por prova. Toda a IA de texto fica num
-módulo só (`worker/ia.js`), então trocar de modelo é mudar uma variável.
+A IA de texto é a **DeepSeek**. O **`deepseek-flash`, com o raciocínio desligado**, conversa e julga cada
+resposta da prova, porque precisa ser rápido e barato. O **`deepseek-v4-pro`, com raciocínio**, faz a correção
+final, que pede mais critério e roda uma vez por prova. Toda a IA de texto fica num módulo só
+(`worker/ia.js`), então trocar de modelo é mudar uma variável. O app começou no Claude e trocou de provedor
+mexendo só nesse arquivo.
+
+### A resposta da IA é conferida antes de ser usada
+
+O modo JSON da DeepSeek garante JSON válido, mas não garante o formato. Por isso o schema de cada resposta vai
+escrito no prompt, e o Worker confere o que voltou: campo faltando, tipo errado ou nível fora da escala CEFR
+contam como falha, e a pergunta é refeita (até 3 vezes, junto com servidor ocupado e queda de rede). Nível com
+a caixa trocada (`b1`) é consertado em vez de recusado. A ligação tem uma suíte própria, sem rede, com o
+`fetch` simulado.
 
 ## Arquitetura
 
@@ -104,7 +114,7 @@ módulo só (`worker/ia.js`), então trocar de modelo é mudar uma variável.
 flowchart LR
   A["iPhone · Safari<br/>PWA (public/)"] -- "WAV 16 kHz" --> W["Cloudflare Worker<br/>(worker/index.js)"]
   W -- "fala → texto" --> WH["Workers AI<br/>Whisper"]
-  W -- "juiz · conversa · correção" --> C["Claude API<br/>Haiku + Sonnet"]
+  W -- "juiz · conversa · correção" --> C["DeepSeek API<br/>flash + v4-pro"]
   W -- "texto → voz" --> AU["Workers AI<br/>Aura-2"]
   W <--> D[("D1<br/>contas · perfis · sessões · erros")]
 ```
@@ -121,7 +131,7 @@ flowchart LR
 ## Testes
 
 ```bash
-npm run teste   # 120 provas: 59 de regras + 51 de ponta a ponta + 10 do login aberto
+npm run teste   # 165 provas: 59 de regras + 45 da ligação com a IA + 51 de ponta a ponta + 10 do login aberto
 ```
 
 - **Regras** (`teste-regras.mjs`): a escada da prova, as medidas de fluência e a nota final, como funções
@@ -160,7 +170,7 @@ O microfone funciona em `localhost`. No celular, só com HTTPS.
 
 ## Stack
 
-Cloudflare Workers · D1 · Workers AI (Whisper, Aura-2) · Claude API (Haiku, Sonnet) · JavaScript puro ·
+Cloudflare Workers · D1 · Workers AI (Whisper, Aura-2) · DeepSeek API (flash, v4-pro) · JavaScript puro ·
 Web Audio API (`AudioWorklet`) · PWA
 
 ---

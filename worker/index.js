@@ -95,7 +95,7 @@ async function rotear(req, url, env) {
 
 /* CONTAS_LIBERADAS: lista de e-mails, ou "*" para qualquer conta Google com e-mail verificado (decisão do Ronny em
    08/10, D11). Aberto, quem segura o gasto são as travas: MAX_CONTAS, LIMITE_TURNOS_DIA (por conta) e
-   LIMITE_GLOBAL_DIA (todas as contas somadas — o Whisper e a voz cobram na Cloudflare, fora do limite da Anthropic). */
+   LIMITE_GLOBAL_DIA (todas as contas somadas — o Whisper e a voz cobram na Cloudflare, fora do saldo da DeepSeek). */
 function liberado(email, env) {
   const lista = String(env.CONTAS_LIBERADAS || "").split(",").map(normalizar).filter(Boolean);
   return !!email && (lista.includes("*") || lista.includes(email));
@@ -366,7 +366,7 @@ function publicoPerfil(p) {
 }
 
 function mensagemIA(motivo) {
-  return { limite: "a IA está ocupada, tente em instantes", sem_chave: "a chave da IA não está configurada", chave_invalida: "a chave da IA foi recusada", recusou: "a IA recusou esta resposta", cortou: "a resposta da IA veio cortada" }[motivo] || "a IA não respondeu";
+  return { limite: "a IA está ocupada, tente em instantes", sem_chave: "a chave da IA não está configurada", chave_invalida: "a chave da IA foi recusada", sem_saldo: "a IA está sem crédito agora", cota_voz: "acabou a cota de hoje para ouvir a sua voz; ela volta às 21h (horário de Brasília)", ouvir: "não consegui ouvir o seu áudio agora", recusou: "a IA recusou esta resposta", cortou: "a resposta da IA veio cortada" }[motivo] || "a IA não respondeu";
 }
 
 class Resposta {

@@ -1,20 +1,24 @@
 /* A IA de texto do Stepwise: o juiz de cada resposta da prova, o avaliador final, o parceiro de conversa e o
-   relatório. Tudo pela API da Anthropic direto (SDK oficial), com saída em JSON validada pelo próprio schema.
+   relatório. Tudo pela API da DeepSeek (formato OpenAI, `fetch` puro, sem SDK), no lugar da Anthropic desde
+   09/10/2026, a pedido do Ronny (D14 no docs/00-estado.md).
    ⛔ Nunca pelo 9router: ele não é alcançável daqui e a chave dele é a da produção do 48 (docs/00-estado.md §3).
 
-   Conversa e juiz: MODELO_CONVERSA (Haiku 4.5, rápido e barato, sem pensamento).
-   Avaliação final e relatório: MODELO_AVALIACAO (Sonnet 5.5, pensamento adaptativo, effort medium, com o
-   fallback do servidor ligado para o caso de recusa).
+   Conversa e juiz: MODELO_CONVERSA (deepseek-flash) SEM pensamento. Na DeepSeek o pensamento vem LIGADO por
+   padrão, e com ele o juiz (max_tokens 600) gastaria o teto pensando e voltaria cortado.
+   Avaliação final e relatório: MODELO_AVALIACAO (deepseek-v4-pro) COM pensamento.
+
+   A DeepSeek não garante schema: o modo JSON só garante JSON válido. Por isso o schema vai escrito no prompt e a
+   resposta é conferida aqui (`conferir`); o que vier fora dele conta como falha e é pedido de novo.
 
    Com env.__iaFalsa (só em localhost, ver index.js) nada sai da máquina: respostas fixas para os testes. */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { NIVEIS } from "./regras.js";
 
 export class ErroIA extends Error {
-  constructor(motivo, detalhe) {
+  constructor(motivo, detalhe, repete = false) {
     super(motivo + (detalhe ? ": " + detalhe : ""));
     this.motivo = motivo;
+    this.repete = repete; // vale tentar de novo (servidor ocupado, rede, resposta vazia ou fora do schema)
   }
 }
 
@@ -22,43 +26,116 @@ const NIVEL = { type: "string", enum: NIVEIS };
 
 /* ---------- chamada base ---------- */
 
+const URL_IA = "https://api.deepseek.com/chat/completions";
+const TENTATIVAS = 3; // a 1ª + 2 de novo, como o maxRetries: 2 do SDK da Anthropic de antes
+
 async function json(env, { avaliacao, system, messages, schema, maxTokens }) {
-  if (!env.ANTHROPIC_API_KEY) throw new ErroIA("sem_chave", "ANTHROPIC_API_KEY não configurada");
-  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 2 });
-  const format = { type: "json_schema", schema };
+  if (!env.DEEPSEEK_API_KEY) throw new ErroIA("sem_chave", "DEEPSEEK_API_KEY não configurada");
+  const corpo = {
+    model: avaliacao ? env.MODELO_AVALIACAO : env.MODELO_CONVERSA,
+    messages: [{ role: "system", content: system + instrucaoJSON(schema) }, ...messages],
+    response_format: { type: "json_object" },
+    thinking: { type: avaliacao ? "enabled" : "disabled" },
+    // Com pensamento, o raciocínio entra na conta do max_tokens: folga grande (só se paga o que for usado).
+    max_tokens: maxTokens || (avaliacao ? 32000 : 2000),
+  };
+  const passo = env.__esperaIA ?? 1000;
+  for (let i = 1; ; i++) {
+    try {
+      return await chamar(env, corpo, schema);
+    } catch (e) {
+      if (!(e instanceof ErroIA) || !e.repete || i >= TENTATIVAS) throw e;
+      await new Promise((ok) => setTimeout(ok, passo * i));
+    }
+  }
+}
+
+async function chamar(env, corpo, schema) {
   let r;
   try {
-    r = avaliacao
-      ? await client.beta.messages.create({
-          model: env.MODELO_AVALIACAO,
-          max_tokens: maxTokens || 16000,
-          betas: ["server-side-fallback-2026-07-01"],
-          fallbacks: "default",
-          output_config: { effort: "medium", format },
-          system,
-          messages,
-        })
-      : await client.messages.create({
-          model: env.MODELO_CONVERSA,
-          max_tokens: maxTokens || 2000,
-          output_config: { format },
-          system,
-          messages,
-        });
+    r = await fetch(URL_IA, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + env.DEEPSEEK_API_KEY },
+      body: JSON.stringify(corpo),
+      signal: AbortSignal.timeout(corpo.thinking.type === "enabled" ? 240000 : 60000),
+    });
   } catch (e) {
-    if (e instanceof Anthropic.RateLimitError) throw new ErroIA("limite", "a IA está ocupada, tente em instantes");
-    if (e instanceof Anthropic.AuthenticationError) throw new ErroIA("chave_invalida");
-    if (e instanceof Anthropic.APIError) throw new ErroIA("api", e.status + " " + e.message);
-    throw new ErroIA("rede", String(e && e.message));
+    throw new ErroIA("rede", String(e && e.message), true);
   }
-  if (r.stop_reason === "refusal") throw new ErroIA("recusou", r.stop_details && r.stop_details.category);
-  if (r.stop_reason === "max_tokens") throw new ErroIA("cortou", "max_tokens");
-  const texto = r.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+  if (!r.ok) {
+    const detalhe = r.status + " " + (await r.text().catch(() => "")).slice(0, 200);
+    if (r.status === 401) throw new ErroIA("chave_invalida", detalhe);
+    if (r.status === 402) throw new ErroIA("sem_saldo", detalhe);
+    if (r.status === 429 || r.status === 503) throw new ErroIA("limite", detalhe, true);
+    throw new ErroIA("api", detalhe, r.status >= 500);
+  }
+  const d = await r.json();
+  const escolha = d.choices && d.choices[0];
+  const fim = escolha && escolha.finish_reason;
+  if (fim === "length") throw new ErroIA("cortou", "max_tokens");
+  if (fim === "content_filter") throw new ErroIA("recusou", "content_filter");
+  if (fim === "insufficient_system_resource") throw new ErroIA("limite", fim, true);
+  // A própria DeepSeek avisa que o modo JSON às vezes devolve conteúdo vazio.
+  const texto = (escolha && escolha.message && escolha.message.content) || "";
+  if (!texto.trim()) throw new ErroIA("vazia", fim, true);
+  let dados;
   try {
-    return { dados: JSON.parse(texto), uso: r.usage };
+    dados = JSON.parse(extrairJSON(texto));
   } catch {
-    throw new ErroIA("json_invalido", texto.slice(0, 200));
+    throw new ErroIA("json_invalido", texto.slice(0, 200), true);
   }
+  const c = conferir(schema, dados);
+  if (c.erro) throw new ErroIA("fora_do_schema", c.erro, true);
+  return { dados: c.valor, uso: d.usage };
+}
+
+function instrucaoJSON(schema) {
+  return `\n\nOutput format: reply with ONE json object and nothing else (no markdown fences, no comments). It must follow this JSON Schema: every property is required, no extra properties, and enum strings must be written exactly as listed.\n${JSON.stringify(schema)}`;
+}
+
+/* Tira as cercas de markdown e o que vier em volta do objeto. */
+export function extrairJSON(texto) {
+  const t = texto.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  const ini = t.indexOf("{"), fim = t.lastIndexOf("}");
+  return ini >= 0 && fim > ini ? t.slice(ini, fim + 1) : t;
+}
+
+/* Confere `valor` contra o schema (o subconjunto usado aqui: object, array, string, boolean, enum). Devolve
+   { valor } já consertado — enum com a caixa trocada vira o certo ("b1" → "B1"), propriedade a mais sai —
+   ou { erro } com o caminho do primeiro problema. */
+export function conferir(schema, valor, caminho = "$") {
+  if (schema.type === "object") {
+    if (!valor || typeof valor !== "object" || Array.isArray(valor)) return { erro: caminho + " não é objeto" };
+    const saida = {};
+    for (const [k, sub] of Object.entries(schema.properties)) {
+      if (!(k in valor)) {
+        if ((schema.required || []).includes(k)) return { erro: caminho + "." + k + " faltando" };
+        continue;
+      }
+      const r = conferir(sub, valor[k], caminho + "." + k);
+      if (r.erro) return r;
+      saida[k] = r.valor;
+    }
+    return { valor: saida };
+  }
+  if (schema.type === "array") {
+    if (!Array.isArray(valor)) return { erro: caminho + " não é lista" };
+    const saida = [];
+    for (let i = 0; i < valor.length; i++) {
+      const r = conferir(schema.items, valor[i], `${caminho}[${i}]`);
+      if (r.erro) return r;
+      saida.push(r.valor);
+    }
+    return { valor: saida };
+  }
+  if (schema.type === "boolean") return typeof valor === "boolean" ? { valor } : { erro: caminho + " não é booleano" };
+  if (schema.type === "string") {
+    if (typeof valor !== "string") return { erro: caminho + " não é texto" };
+    if (!schema.enum || schema.enum.includes(valor)) return { valor };
+    const certo = schema.enum.find((x) => x.toLowerCase() === valor.trim().toLowerCase());
+    return certo ? { valor: certo } : { erro: `${caminho} = "${valor.slice(0, 40)}" fora de ${schema.enum.join("|")}` };
+  }
+  return { valor };
 }
 
 function obj(props) {

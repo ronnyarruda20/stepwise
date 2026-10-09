@@ -1,4 +1,4 @@
-/* Prova de ponta a ponta no Worker local, em MODO FALSO (sem Claude, sem Workers AI, nada sai da máquina):
+/* Prova de ponta a ponta no Worker local, em MODO FALSO (sem DeepSeek, sem Workers AI, nada sai da máquina):
    login, perfis, isolamento entre contas, a prova inteira, a conversa com memória de erros, o limite diário e o
    "Sair" que revoga. `npm run teste:rota`.
 
@@ -33,7 +33,7 @@ function wrangler(args, opcoes = {}) {
 rmSync(PERSIST, { recursive: true, force: true });
 wrangler(["d1", "migrations", "apply", "stepwise", "--local", "--persist-to", PERSIST], { env: { ...process.env, CI: "1" } });
 
-const vars = { IA_FALSA: "1", MODO_LOCAL: "1", CONTAS_LIBERADAS: "a@teste.local,b@teste.local", SESSAO_SEGREDO: "segredo-de-teste", LIMITE_TURNOS_DIA: String(LIMITE), ANTHROPIC_API_KEY: "" };
+const vars = { IA_FALSA: "1", MODO_LOCAL: "1", CONTAS_LIBERADAS: "a@teste.local,b@teste.local", SESSAO_SEGREDO: "segredo-de-teste", LIMITE_TURNOS_DIA: String(LIMITE), DEEPSEEK_API_KEY: "" };
 const servidor = spawn(process.execPath, [WRANGLER, "dev", "--port", String(PORTA), "--persist-to", PERSIST, "--log-level", "warn", ...Object.entries(vars).flatMap(([k, v]) => ["--var", `${k}:${v}`])], { cwd: RAIZ, stdio: ["ignore", "pipe", "pipe"] });
 let log = "";
 servidor.stdout.on("data", (d) => (log += d));

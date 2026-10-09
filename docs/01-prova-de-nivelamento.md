@@ -6,14 +6,14 @@ tipo: referencia
 status: vivo
 rag: incluir
 precedencia: 60
-atualizado: 2026-10-08
-verificado_em: 2026-10-08
+atualizado: 2026-10-09
+verificado_em: 2026-10-09
 fonte_de_verdade_para: [prova-de-nivelamento-stepwise]
 nao_usar_para: [copy, preco-publico]
 substituido_por: null
 tags: [stepwise, ia, prompt]
 resumo: >
-  Desenho da prova de nivelamento do Stepwise: ~10 min falando, aquecimento + escada adaptativa CEFR que começa em A2 (passou sobe, duas quedas fixam o teto, desce para conferir), escuta no nível do teto e nota final = mediana de 3 correções independentes do Sonnet 5.5 somada a medidas sem IA (palavras por minuto, pausas, hesitações). Prova às cegas, variante de perguntas por reprova, alerta de divergência escada × avaliador, ajuste contínuo pelas conversas (3 sinais iguais sugerem refazer) e o que falta para confiar na nota (calibração com gente de nível conhecido).
+  Desenho da prova de nivelamento do Stepwise: ~10 min falando, aquecimento + escada adaptativa CEFR que começa em A2 (passou sobe, duas quedas fixam o teto, desce para conferir), escuta no nível do teto e nota final = mediana de 3 correções independentes do modelo de avaliação (deepseek-v4-pro desde 09/10, antes Sonnet 5.5) somada a medidas sem IA (palavras por minuto, pausas, hesitações). Prova às cegas, variante de perguntas por reprova, alerta de divergência escada × avaliador, ajuste contínuo pelas conversas (3 sinais iguais sugerem refazer) e o que falta para confiar na nota (calibração com gente de nível conhecido).
 ---
 
 # Stepwise — a prova de nivelamento
@@ -46,7 +46,7 @@ nurse — that's a demanding job!"*), como numa prova de verdade.
 **Variante:** a pergunta escolhida em cada nível muda conforme o número de provas que o perfil já fez, para
 que refazer a prova não vire decorar as mesmas perguntas.
 
-## 2. O juiz de cada resposta (Haiku 4.5)
+## 2. O juiz de cada resposta (`deepseek-flash` sem raciocínio; até 09/10/2026, Haiku 4.5)
 
 Recebe o nível, a pergunta, o critério do nível, a transcrição e as medidas da fala. Devolve `passou`, um
 motivo em português (fica no banco, não aparece para a aluna) e a reação em inglês. Na dúvida, reprova: a
@@ -61,7 +61,8 @@ Conselho da Europa. Ficam em `worker/tarefas.js`, e trocar um critério é edita
 
 - **Sem IA**, tiradas do tempo de cada palavra que o Whisper devolve: palavras por resposta, palavras por
   minuto, pausas longas (> 1,2 s) e hesitações (*um, uh, é…*).
-- **Com IA:** o Sonnet 5.5 corrige a prova inteira **3 vezes, em paralelo e de forma independente**, com uma
+- **Com IA:** o modelo de avaliação (`deepseek-v4-pro` com raciocínio desde 09/10/2026; antes, Sonnet 5.5)
+  corrige a prova inteira **3 vezes, em paralelo e de forma independente**, com uma
   rubrica fixa. Cada rodada dá um nível por dimensão (vocabulário, gramática, fluência, compreensão) e um geral.
 
 **A nota é a mediana das 3**, dimensão por dimensão. Com 2 rodadas válidas fica a menor das duas, para não

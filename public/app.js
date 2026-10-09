@@ -40,6 +40,8 @@ let devagar = pref("devagar") === "1";
 let audioDesbloqueado = false;
 let ultimaFala = null; // { audio, texto } — para o "Repetir"
 let aoFalar = null;    // o orbe da sessão escuta isto para animar enquanto a IA fala
+let vezDaFala = 0;     // sobe a cada tocar()/pararAudio(): a fala interrompida fica quieta em vez de cair na voz do aparelho
+let urlDaVoz = null;   // blob: do MP3 em uso, liberado ao trocar
 
 /* ---------- utilitários ---------- */
 
@@ -140,6 +142,7 @@ function silencio() {
 }
 
 function pararAudio() {
+  vezDaFala++;
   try { voz.pause(); } catch {}
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   if (aoFalar) aoFalar(false);
@@ -148,27 +151,56 @@ function pararAudio() {
 voz.addEventListener("ended", () => aoFalar && aoFalar(false));
 voz.addEventListener("pause", () => aoFalar && aoFalar(false));
 
-/* Toca a voz da IA (MP3 do servidor) ou, se ele não veio, a voz do próprio aparelho. */
+/* A voz do aparelho: a primeira en-US da lista pode ser uma das vozes "de brincadeira" do iPhone (Albert, Bad
+   News, Zarvox…) ou uma robótica. Prefere a Premium ou Aprimorada que a pessoa baixou em Ajustes → Acessibilidade
+   → Conteúdo Falado → Vozes, depois as naturais conhecidas (iPhone, Chrome, Edge). */
+const VOZES_ESTRANHAS = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|kathy|ralph|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley)\b/i;
+
+function melhorVoz() {
+  const nota = (v) =>
+    /premium/i.test(v.name) ? 4
+    : /enhanced|aprimorad|natural|neural/i.test(v.name) ? 3
+    : /^(ava|zoe|samantha|allison|susan|evan|nathan|tom|joelle|noelle|google us english)\b/i.test(v.name) ? 2
+    : v.localService ? 1 : 0;
+  const candidatas = speechSynthesis.getVoices().filter((v) => /^en[-_]US$/i.test(v.lang) && !VOZES_ESTRANHAS.test(v.name));
+  return candidatas.sort((a, b) => nota(b) - nota(a))[0] || null;
+}
+
+/* Toca a voz da IA (MP3 do servidor) ou, se ele não veio, a voz do próprio aparelho.
+   Duas vozes ao mesmo tempo (09/10): quando um tocar() interrompia outro que ainda carregava (dois toques em "Ouvir de
+   novo" ou "Repetir", ou o microfone aberto no meio), o play() do primeiro rejeitava com AbortError e ele caía na voz
+   do aparelho por cima do MP3 do segundo. Cada chamada guarda a sua vez e só segue enquanto for a fala da vez. */
 async function tocar(fala) {
   if (!fala) return;
   ultimaFala = fala;
   pararAudio();
+  const minha = vezDaFala;
   if (fala.audio) {
     const bytes = Uint8Array.from(atob(fala.audio), (c) => c.charCodeAt(0));
-    voz.src = URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
+    const anterior = urlDaVoz;
+    urlDaVoz = URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
+    voz.src = urlDaVoz;
+    if (anterior) URL.revokeObjectURL(anterior);
     voz.playbackRate = devagar ? 0.8 : 1;
-    try { await voz.play(); if (aoFalar) aoFalar(true); return; } catch {}
+    try {
+      await voz.play();
+      if (minha === vezDaFala && aoFalar) aoFalar(true);
+      return;
+    } catch (e) {
+      // Interrompida (outra fala, microfone, "Sair"): fica quieta. A voz do aparelho só entra se o MP3 não pôde
+      // tocar (bloqueio de autoplay, formato) e esta ainda é a fala da vez.
+      if (minha !== vezDaFala || (e && e.name === "AbortError")) return;
+    }
   }
-  if ("speechSynthesis" in window) {
-    const u = new SpeechSynthesisUtterance(fala.texto);
-    u.lang = "en-US";
-    u.rate = devagar ? 0.75 : 0.95;
-    const v = speechSynthesis.getVoices().find((x) => x.lang === "en-US");
-    if (v) u.voice = v;
-    u.onstart = () => aoFalar && aoFalar(true);
-    u.onend = () => aoFalar && aoFalar(false);
-    speechSynthesis.speak(u);
-  }
+  if (minha !== vezDaFala || !("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(fala.texto);
+  u.lang = "en-US";
+  u.rate = devagar ? 0.75 : 0.95;
+  const v = melhorVoz();
+  if (v) u.voice = v;
+  u.onstart = () => { if (minha === vezDaFala && aoFalar) aoFalar(true); };
+  u.onend = () => { if (minha === vezDaFala && aoFalar) aoFalar(false); };
+  speechSynthesis.speak(u);
 }
 
 /* ---------- entrar ---------- */
@@ -233,10 +265,13 @@ async function telaPerfil(id) {
   const p = d.perfil;
   const erro = h("p", { class: "erro", role: "alert" });
 
+  let iniciando = false;
   const comecar = async (fn) => {
+    if (iniciando) return; // dois toques seguidos abriam duas sessões (e duas vozes)
+    iniciando = true;
     desbloquearAudio();
     erro.textContent = "";
-    try { await fn(); } catch (x) { if (x.status !== 401) erro.textContent = x.message; }
+    try { await fn(); } catch (x) { if (x.status !== 401) erro.textContent = x.message; } finally { iniciando = false; }
   };
   const fazerProva = () => comecar(async () => telaSessao(await postJSON("/api/perfis/" + id + "/prova"), p));
   const conversar = (tema) => comecar(async () => { pref("tema", tema); telaSessao(await postJSON("/api/perfis/" + id + "/conversa", { tema }), p); });
@@ -488,8 +523,11 @@ async function telaResultado(id, perfil) {
   const transcricao = h("details", { class: "cartao" }, h("summary", {}, "Ver a conversa inteira"),
     s.turnos.map((t) => h("p", { class: "pequeno" + (t.papel === "ia" ? " suave" : "") }, h("b", {}, t.papel === "ia" ? "IA: " : "Você: "), t.texto)));
   const conversarAgora = h("button", { class: "cheio", onclick: async () => {
+    if (conversarAgora.disabled) return; // dois toques seguidos abriam duas conversas
+    conversarAgora.disabled = true;
     desbloquearAudio();
     try { telaSessao(await postJSON("/api/perfis/" + perfil.id + "/conversa", { tema: pref("tema") || "dia-a-dia" }), { ...perfil, nivel: r.nivel || perfil.nivel }); } catch (e) { alert(e.message); }
+    conversarAgora.disabled = false;
   } }, icone("conversa"), "Conversar agora");
 
   if (s.tipo === "prova") {

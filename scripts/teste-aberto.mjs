@@ -21,7 +21,7 @@ function prova(nome, cond, detalhe = "") {
 
 rmSync(PERSIST, { recursive: true, force: true });
 execFileSync(process.execPath, [WRANGLER, "d1", "migrations", "apply", "stepwise", "--local", "--persist-to", PERSIST], { cwd: RAIZ, stdio: "ignore", env: { ...process.env, CI: "1" } });
-const vars = { IA_FALSA: "1", MODO_LOCAL: "1", CONTAS_LIBERADAS: "*", MAX_CONTAS: "2", LIMITE_TURNOS_DIA: "100", LIMITE_GLOBAL_DIA: "3", SESSAO_SEGREDO: "segredo-de-teste", ANTHROPIC_API_KEY: "" };
+const vars = { IA_FALSA: "1", MODO_LOCAL: "1", CONTAS_LIBERADAS: "*", MAX_CONTAS: "2", LIMITE_TURNOS_DIA: "100", LIMITE_GLOBAL_DIA: "3", SESSAO_SEGREDO: "segredo-de-teste", DEEPSEEK_API_KEY: "" };
 const servidor = spawn(process.execPath, [WRANGLER, "dev", "--port", String(PORTA), "--persist-to", PERSIST, "--log-level", "warn", ...Object.entries(vars).flatMap(([k, v]) => ["--var", `${k}:${v}`])], { cwd: RAIZ, stdio: "ignore" });
 function derrubar() {
   try {
